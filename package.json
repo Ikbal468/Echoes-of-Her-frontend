@@ -5,6 +5,9 @@
   "homepage": "https://ionicframework.com/",
   "scripts": {
     "ng": "ng",
+    "config": "node scripts/set-env.mjs",
+    "prestart": "npm run config",
+    "prebuild": "npm run config",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",

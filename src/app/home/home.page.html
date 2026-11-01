@@ -1,21 +1,202 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title> Blank </ion-title>
+  <ion-toolbar color="dark">
+    <ion-title>Echoes of Her</ion-title>
+    @if (totalDefended > 0) {
+      <ion-badge slot="end" color="danger" class="counter-badge">
+        {{ totalDefended }} Defended
+      </ion-badge>
+    }
   </ion-toolbar>
+
+  @if (!isInterventionActive) {
+    <!-- Server Wake/Sleep Status Bar -->
+    <div class="server-status-bar" [class.is-asleep]="serverStatus === 'sleeping'" [class.is-waking]="serverStatus === 'waking'" [class.is-awake]="serverStatus === 'awake'">
+      @if (serverStatus === 'sleeping') {
+        <div class="status-content">
+          <span class="status-indicator dot-sleeping"></span>
+          <span class="status-text">Server is asleep (Render free tier)</span>
+          <ion-button size="small" color="warning" fill="solid" class="wake-btn" (click)="wakeUpServer()">
+            Wake Up
+          </ion-button>
+        </div>
+      } @else if (serverStatus === 'waking') {
+        <div class="status-content">
+          <ion-spinner name="crescent" class="status-spinner"></ion-spinner>
+          <span class="status-text">Waking server up... ({{ wakeSeconds }}s)</span>
+        </div>
+      } @else if (serverStatus === 'awake') {
+        <div class="status-content">
+          <span class="status-indicator dot-awake"></span>
+          <span class="status-text text-muted">Server is active & ready</span>
+        </div>
+      }
+    </div>
+
+    <ion-toolbar color="dark" class="segment-toolbar">
+      <ion-segment [(ngModel)]="currentSegment" (ionChange)="fetchMetrics()">
+        <ion-segment-button value="record">
+          <ion-label>Anchor</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="ledger">
+          <ion-label>Stoic Ledger</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
+  }
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding main-container">
+  <!-- View 1: Record Impulse Form -->
+  @if (!isInterventionActive && currentSegment === 'record') {
+    <div class="input-card">
+      <div class="headline">
+        <h2>Acknowledge the Impulse</h2>
+        <p>Log the exact trigger before your mind wanders.</p>
+      </div>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>
-      Start with Ionic
-      <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a>
-    </p>
-  </div>
+      <ion-textarea
+        class="form-item"
+        fill="outline"
+        label="What caught your attention?"
+        labelPlacement="floating"
+        [(ngModel)]="triggerDescription"
+        [rows]="4"
+        placeholder="Be objective. Describe what stirred your emotion."
+      ></ion-textarea>
+
+      <ion-input
+        class="form-item"
+        fill="outline"
+        label="Location / Context"
+        labelPlacement="floating"
+        [(ngModel)]="location"
+        placeholder="e.g., Starbucks Mid Valley, Library"
+      ></ion-input>
+
+      <div class="intensity-block">
+        <div class="intensity-header">
+          <ion-label>Emotional Pull</ion-label>
+          <span class="intensity-val">{{ intensity }} / 5</span>
+        </div>
+        <ion-range [min]="1" [max]="5" [snaps]="true" [ticks]="true" [(ngModel)]="intensity">
+          <ion-label slot="start">1</ion-label>
+          <ion-label slot="end">5</ion-label>
+        </ion-range>
+      </div>
+
+      @if (errorMessage) {
+        <div class="error-banner">
+          <p>{{ errorMessage }}</p>
+          @if (serverStatus === 'sleeping') {
+            <ion-button size="small" color="danger" fill="outline" class="err-wake-btn" (click)="wakeUpServer()">
+              Trigger Wake Up Now
+            </ion-button>
+          }
+        </div>
+      }
+
+      <ion-button
+        expand="block"
+        color="danger"
+        class="action-btn"
+        (click)="submitIncident()"
+        [disabled]="!triggerDescription.trim() || submitting"
+      >
+        @if (submitting) {
+          <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
+          <span>Anchoring...</span>
+        } @else {
+          <span>Record &amp; Anchor</span>
+        }
+      </ion-button>
+    </div>
+  }
+
+  <!-- View 2: Stoic Ledger (Analytics / Retrospective) -->
+  @if (!isInterventionActive && currentSegment === 'ledger') {
+    <div class="ledger-card">
+      <div class="metrics-banner">
+        <span class="metric-number">{{ totalDefended }}</span>
+        <span class="metric-label">Total Impulses Defended</span>
+        <p class="metric-sub">Every recorded impulse is a proof of principle held firm.</p>
+      </div>
+
+      @if (loadingLedger) {
+        <div class="loading-box">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+      } @else if (history.length === 0) {
+        <div class="empty-box">
+          <p>No impulses logged yet. The fortress remains quiet.</p>
+        </div>
+      } @else {
+        <div class="history-list">
+          @for (item of history; track item.id) {
+            <div class="history-item">
+              <div class="item-top">
+                <span class="item-loc">{{ item.location || 'Unknown location' }}</span>
+                <span class="item-intensity">Pull {{ item.intensity }}/5</span>
+              </div>
+              <p class="item-desc">"{{ item.triggerDescription }}"</p>
+              <div class="item-meta">
+                <span>{{ item.createdAt | date: 'mediumDate' }} • {{ item.createdAt | date: 'shortTime' }}</span>
+                @if (item.reflectedDurationSeconds > 0) {
+                  <span class="reflection-tag">Paused for {{ item.reflectedDurationSeconds }}s</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- View 3: Fullscreen Forced Intervention Layer -->
+  @if (isInterventionActive) {
+    <div class="intervention-overlay">
+      <div class="anchor-content">
+        <!-- Circular Visual Countdown Timer -->
+        <div class="timer-radial-wrap">
+          <svg class="timer-svg" viewBox="0 0 100 100">
+            <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+            <circle
+              class="timer-progress"
+              cx="50"
+              cy="50"
+              r="45"
+              [style.strokeDashoffset]="strokeDashoffset"
+            ></circle>
+          </svg>
+          <div class="timer-center-text">
+            @if (cooldownTimer > 0) {
+              <span class="seconds-num">{{ cooldownTimer }}</span>
+              <span class="seconds-label">SEC</span>
+            } @else {
+              <span class="ready-check">✓</span>
+            }
+          </div>
+        </div>
+
+        <span class="whisper-label">REMEMBER THE VOW</span>
+        
+        <blockquote class="vow-quote">"{{ activeVowText }}"</blockquote>
+        
+        <p class="reflection-sub">
+          This attraction is biological and temporary. Your promise is intentional and permanent.
+        </p>
+
+        <div class="action-footer">
+          <ion-button
+            expand="block"
+            [color]="cooldownTimer > 0 ? 'dark' : 'danger'"
+            class="uphold-btn"
+            [disabled]="cooldownTimer > 0"
+            (click)="acknowledgeAndUphold()"
+          >
+            {{ cooldownTimer > 0 ? 'Pause & Reflect (' + cooldownTimer + 's)' : 'I Uphold My Promise' }}
+          </ion-button>
+        </div>
+      </div>
+    </div>
+  }
 </ion-content>
