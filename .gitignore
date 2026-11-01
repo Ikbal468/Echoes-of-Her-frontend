@@ -1,0 +1,47 @@
+# Compiled output
+/dist
+/www
+/out-tsc
+/.angular/cache
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Unit & E2E Testing
+/coverage
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
+# Capacitor / Mobile builds (if native platforms are generated/synced)
+/android/
+/ios/
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.swp
+
