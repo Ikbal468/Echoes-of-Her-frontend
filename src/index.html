@@ -2,11 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Ionic App</title>
+    <title>Echoes of Her - Anchor</title>
 
     <base href="/" />
 
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark" />
     <meta
       name="viewport"
       content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -16,12 +16,45 @@
 
     <link rel="icon" type="image/png" href="assets/icon/favicon.png" />
 
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS v3 CDN with plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Custom Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            },
+            colors: {
+              midnight: '#090a10',
+              glassDark: 'rgba(18, 20, 32, 0.65)',
+              glassBorder: 'rgba(255, 255, 255, 0.08)',
+            },
+            boxShadow: {
+              'glow-cyan': '0 0 20px -3px rgba(56, 189, 248, 0.45)',
+              'glow-ruby': '0 10px 25px -4px rgba(225, 29, 72, 0.45)',
+              'inner-subtle': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.08)',
+            }
+          }
+        }
+      }
+    </script>
+
     <!-- add to homescreen for ios -->
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   </head>
 
-  <body>
+  <body class="bg-[#06070b] text-slate-100 font-sans antialiased">
     <app-root></app-root>
   </body>
 </html>

@@ -1,44 +1,14 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonTextarea,
-  IonInput,
-  IonRange,
-  IonButton,
-  IonLabel,
-  IonSegment,
-  IonSegmentButton,
-  IonBadge,
-  IonSpinner,
-} from '@ionic/angular';
+import { IonContent, IonSpinner } from '@ionic/angular';
 import { IncidentsApiService, IncidentRecord } from '../services/incidents-api.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonTextarea,
-    IonInput,
-    IonRange,
-    IonButton,
-    IonLabel,
-    IonSegment,
-    IonSegmentButton,
-    IonBadge,
-    IonSpinner,
-  ],
+  imports: [CommonModule, FormsModule, IonContent, IonSpinner],
 })
 export class HomePage implements OnInit, OnDestroy {
   private api = inject(IncidentsApiService);

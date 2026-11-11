@@ -1,202 +1,559 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="dark">
-    <ion-title>Echoes of Her</ion-title>
-    @if (totalDefended > 0) {
-      <ion-badge slot="end" color="danger" class="counter-badge">
-        {{ totalDefended }} Defended
-      </ion-badge>
-    }
-  </ion-toolbar>
-
-  @if (!isInterventionActive) {
-    <!-- Server Wake/Sleep Status Bar -->
-    <div class="server-status-bar" [class.is-asleep]="serverStatus === 'sleeping'" [class.is-waking]="serverStatus === 'waking'" [class.is-awake]="serverStatus === 'awake'">
-      @if (serverStatus === 'sleeping') {
-        <div class="status-content">
-          <span class="status-indicator dot-sleeping"></span>
-          <span class="status-text">Server is asleep (Render free tier)</span>
-          <ion-button size="small" color="warning" fill="solid" class="wake-btn" (click)="wakeUpServer()">
-            Wake Up
-          </ion-button>
-        </div>
-      } @else if (serverStatus === 'waking') {
-        <div class="status-content">
-          <ion-spinner name="crescent" class="status-spinner"></ion-spinner>
-          <span class="status-text">Waking server up... ({{ wakeSeconds }}s)</span>
-        </div>
-      } @else if (serverStatus === 'awake') {
-        <div class="status-content">
-          <span class="status-indicator dot-awake"></span>
-          <span class="status-text text-muted">Server is active & ready</span>
-        </div>
-      }
-    </div>
-
-    <ion-toolbar color="dark" class="segment-toolbar">
-      <ion-segment [(ngModel)]="currentSegment" (ionChange)="fetchMetrics()">
-        <ion-segment-button value="record">
-          <ion-label>Anchor</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="ledger">
-          <ion-label>Stoic Ledger</ion-label>
-        </ion-segment-button>
-      </ion-segment>
-    </ion-toolbar>
-  }
-</ion-header>
-
-<ion-content [fullscreen]="true" class="ion-padding main-container">
-  <!-- View 1: Record Impulse Form -->
-  @if (!isInterventionActive && currentSegment === 'record') {
-    <div class="input-card">
-      <div class="headline">
-        <h2>Acknowledge the Impulse</h2>
-        <p>Log the exact trigger before your mind wanders.</p>
+<ion-content [fullscreen]="true" class="bg-[#06070b]">
+  <div class="min-h-full flex justify-center items-center bg-[#06070b] p-0 sm:p-4 select-none">
+    <!-- Mobile Viewport Wrapper (390px - 430px iPhone canvas standard) -->
+    <div
+      class="relative w-full max-w-[430px] min-h-screen sm:min-h-[890px] sm:max-h-[920px] bg-[#07090e] sm:rounded-[44px] overflow-hidden border border-white/5 shadow-2xl flex flex-col justify-between"
+    >
+      <!-- BEGIN: AmbientBackgroundOrbs -->
+      <div aria-hidden="true" class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- Neon Cyan / Blue Ambient Light -->
+        <div class="absolute -top-16 -left-16 w-72 h-72 bg-cyan-600/20 rounded-full blur-[90px]"></div>
+        <!-- Deep Purple / Indigo Glow Orb -->
+        <div class="absolute top-[28%] -right-20 w-80 h-80 bg-indigo-600/20 rounded-full blur-[100px]"></div>
+        <!-- Moody Ruby / Crimson Subtle Core Glow behind CTA -->
+        <div
+          class="absolute bottom-16 left-1/2 -translate-x-1/2 w-80 h-64 bg-rose-900/25 rounded-full blur-[85px]"
+        ></div>
+        <!-- Texture overlay pattern -->
+        <div
+          class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]"
+        ></div>
       </div>
+      <!-- END: AmbientBackgroundOrbs -->
 
-      <ion-textarea
-        class="form-item"
-        fill="outline"
-        label="What caught your attention?"
-        labelPlacement="floating"
-        [(ngModel)]="triggerDescription"
-        [rows]="4"
-        placeholder="Be objective. Describe what stirred your emotion."
-      ></ion-textarea>
-
-      <ion-input
-        class="form-item"
-        fill="outline"
-        label="Location / Context"
-        labelPlacement="floating"
-        [(ngModel)]="location"
-        placeholder="e.g., Starbucks Mid Valley, Library"
-      ></ion-input>
-
-      <div class="intensity-block">
-        <div class="intensity-header">
-          <ion-label>Emotional Pull</ion-label>
-          <span class="intensity-val">{{ intensity }} / 5</span>
-        </div>
-        <ion-range [min]="1" [max]="5" [snaps]="true" [ticks]="true" [(ngModel)]="intensity">
-          <ion-label slot="start">1</ion-label>
-          <ion-label slot="end">5</ion-label>
-        </ion-range>
-      </div>
-
-      @if (errorMessage) {
-        <div class="error-banner">
-          <p>{{ errorMessage }}</p>
-          @if (serverStatus === 'sleeping') {
-            <ion-button size="small" color="danger" fill="outline" class="err-wake-btn" (click)="wakeUpServer()">
-              Trigger Wake Up Now
-            </ion-button>
-          }
-        </div>
-      }
-
-      <ion-button
-        expand="block"
-        color="danger"
-        class="action-btn"
-        (click)="submitIncident()"
-        [disabled]="!triggerDescription.trim() || submitting"
-      >
-        @if (submitting) {
-          <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
-          <span>Anchoring...</span>
-        } @else {
-          <span>Record &amp; Anchor</span>
-        }
-      </ion-button>
-    </div>
-  }
-
-  <!-- View 2: Stoic Ledger (Analytics / Retrospective) -->
-  @if (!isInterventionActive && currentSegment === 'ledger') {
-    <div class="ledger-card">
-      <div class="metrics-banner">
-        <span class="metric-number">{{ totalDefended }}</span>
-        <span class="metric-label">Total Impulses Defended</span>
-        <p class="metric-sub">Every recorded impulse is a proof of principle held firm.</p>
-      </div>
-
-      @if (loadingLedger) {
-        <div class="loading-box">
-          <ion-spinner name="crescent"></ion-spinner>
-        </div>
-      } @else if (history.length === 0) {
-        <div class="empty-box">
-          <p>No impulses logged yet. The fortress remains quiet.</p>
-        </div>
-      } @else {
-        <div class="history-list">
-          @for (item of history; track item.id) {
-            <div class="history-item">
-              <div class="item-top">
-                <span class="item-loc">{{ item.location || 'Unknown location' }}</span>
-                <span class="item-intensity">Pull {{ item.intensity }}/5</span>
+      <!-- BEGIN: TopBar -->
+      @if (!isInterventionActive) {
+        <header
+          class="relative z-10 w-full pt-10 sm:pt-6 pb-2 px-6 flex flex-col backdrop-blur-md bg-white/[0.02] border-b border-white/[0.06]"
+        >
+          <div class="flex items-center justify-between pb-3">
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-2.5">
+              <div
+                class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500/20 to-purple-500/30 border border-white/15 flex items-center justify-center shadow-inner-subtle"
+              >
+                <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M12 21a9 9 0 100-18 9 9 0 000 18z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  ></path>
+                  <path d="M12 8v4l3 3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
               </div>
-              <p class="item-desc">"{{ item.triggerDescription }}"</p>
-              <div class="item-meta">
-                <span>{{ item.createdAt | date: 'mediumDate' }} • {{ item.createdAt | date: 'shortTime' }}</span>
-                @if (item.reflectedDurationSeconds > 0) {
-                  <span class="reflection-tag">Paused for {{ item.reflectedDurationSeconds }}s</span>
-                }
-              </div>
+              <h1 class="text-lg font-semibold tracking-tight text-white/95">Echoes of Her</h1>
             </div>
-          }
-        </div>
-      }
-    </div>
-  }
 
-  <!-- View 3: Fullscreen Forced Intervention Layer -->
-  @if (isInterventionActive) {
-    <div class="intervention-overlay">
-      <div class="anchor-content">
-        <!-- Circular Visual Countdown Timer -->
-        <div class="timer-radial-wrap">
-          <svg class="timer-svg" viewBox="0 0 100 100">
-            <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
-            <circle
-              class="timer-progress"
-              cx="50"
-              cy="50"
-              r="45"
-              [style.strokeDashoffset]="strokeDashoffset"
-            ></circle>
-          </svg>
-          <div class="timer-center-text">
-            @if (cooldownTimer > 0) {
-              <span class="seconds-num">{{ cooldownTimer }}</span>
-              <span class="seconds-label">SEC</span>
+            <!-- Server Status & Badge area -->
+            <div class="flex items-center gap-2">
+              @if (totalDefended > 0) {
+                <span
+                  class="px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[11px] font-bold tracking-wider"
+                >
+                  {{ totalDefended }} Defended
+                </span>
+              }
+              <button
+                aria-label="Server status"
+                (click)="checkServerHealth()"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors bg-white/[0.03] border border-white/[0.05]"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="6" cy="12" r="1.5"></circle>
+                  <circle cx="18" cy="12" r="1.5"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Server Wake/Sleep Status Bar -->
+          <div
+            class="mb-2 px-3 py-1.5 rounded-xl border text-xs transition-colors"
+            [class.bg-amber-500/10]="serverStatus === 'sleeping'"
+            [class.border-amber-500/25]="serverStatus === 'sleeping'"
+            [class.bg-blue-500/10]="serverStatus === 'waking'"
+            [class.border-blue-500/25]="serverStatus === 'waking'"
+            [class.bg-white/[0.02]]="serverStatus === 'awake' || serverStatus === 'checking'"
+            [class.border-white/5]="serverStatus === 'awake' || serverStatus === 'checking'"
+          >
+            @if (serverStatus === 'sleeping') {
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-amber-300">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                  <span class="text-[11px]">Server is asleep</span>
+                </div>
+                <button
+                  (click)="wakeUpServer()"
+                  class="px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-[10px] font-bold uppercase tracking-wider transition-all"
+                >
+                  Wake Up
+                </button>
+              </div>
+            } @else if (serverStatus === 'waking') {
+              <div class="flex items-center gap-2 text-cyan-300">
+                <ion-spinner name="crescent" class="w-3.5 h-3.5"></ion-spinner>
+                <span class="text-[11px]">Waking server up... ({{ wakeSeconds }}s)</span>
+              </div>
+            } @else if (serverStatus === 'awake') {
+              <div class="flex items-center gap-1.5 text-slate-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span class="text-[11px] text-slate-400">System connected & ready</span>
+              </div>
             } @else {
-              <span class="ready-check">✓</span>
+              <div class="flex items-center gap-1.5 text-slate-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span>
+                <span class="text-[11px] text-slate-400">Checking system status...</span>
+              </div>
             }
           </div>
-        </div>
 
-        <span class="whisper-label">REMEMBER THE VOW</span>
-        
-        <blockquote class="vow-quote">"{{ activeVowText }}"</blockquote>
-        
-        <p class="reflection-sub">
-          This attraction is biological and temporary. Your promise is intentional and permanent.
-        </p>
+          <!-- Navigation Tabs: ANCHOR vs STOIC LEDGER -->
+          <nav class="grid grid-cols-2 mt-2 pt-1 relative" data-purpose="segment-tabs">
+            <!-- Active Tab: Anchor -->
+            <button
+              type="button"
+              (click)="currentSegment = 'record'"
+              class="relative py-2.5 text-xs font-bold tracking-widest uppercase text-center transition-all"
+            >
+              <span
+                class="relative z-10 transition-colors"
+                [class.text-cyan-200]="currentSegment === 'record'"
+                [class.text-slate-400]="currentSegment !== 'record'"
+              >
+                Anchor
+              </span>
+              @if (currentSegment === 'record') {
+                <span
+                  class="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_8px_#38bdf8]"
+                ></span>
+              } @else {
+                <span class="absolute bottom-0 left-0 w-full h-[1px] bg-white/[0.04]"></span>
+              }
+            </button>
 
-        <div class="action-footer">
-          <ion-button
-            expand="block"
-            [color]="cooldownTimer > 0 ? 'dark' : 'danger'"
-            class="uphold-btn"
-            [disabled]="cooldownTimer > 0"
-            (click)="acknowledgeAndUphold()"
+            <!-- Inactive Tab: Stoic Ledger -->
+            <button
+              type="button"
+              (click)="currentSegment = 'ledger'; fetchMetrics()"
+              class="relative py-2.5 text-xs font-semibold tracking-widest uppercase text-center transition-all"
+            >
+              <span
+                class="relative z-10 transition-colors"
+                [class.text-cyan-200]="currentSegment === 'ledger'"
+                [class.text-slate-400]="currentSegment !== 'ledger'"
+              >
+                Stoic Ledger
+              </span>
+              @if (currentSegment === 'ledger') {
+                <span
+                  class="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_8px_#38bdf8]"
+                ></span>
+              } @else {
+                <span class="absolute bottom-0 left-0 w-full h-[1px] bg-white/[0.04]"></span>
+              }
+            </button>
+          </nav>
+        </header>
+      }
+      <!-- END: TopBar -->
+
+      <!-- BEGIN: MainContent -->
+      <main class="relative z-10 flex-1 px-6 pt-7 pb-8 flex flex-col justify-start overflow-y-auto">
+        <!-- View 1: Record Impulse Form -->
+        @if (!isInterventionActive && currentSegment === 'record') {
+          <!-- Section Title & Narrative -->
+          <div class="mb-7" data-purpose="header-narrative">
+            <div
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-300 tracking-wider uppercase mb-2.5"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+              Real-time Mindfulness
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight text-white mb-1.5">
+              Acknowledge the Impulse
+            </h2>
+            <p class="text-sm text-slate-400 font-normal leading-relaxed">
+              Log the exact trigger before your mind wanders.
+            </p>
+          </div>
+
+          <!-- Form Inputs Container -->
+          <form class="space-y-4 flex-1 flex flex-col" (ngSubmit)="submitIncident()">
+            <!-- Input 1: Attention Trigger Field -->
+            <div class="space-y-1.5" data-purpose="input-trigger">
+              <label
+                class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1 flex items-center gap-1.5"
+              >
+                <svg class="w-3.5 h-3.5 text-cyan-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  ></path>
+                  <path
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  ></path>
+                </svg>
+                Trigger Focus
+              </label>
+              <div class="relative group">
+                <textarea
+                  name="triggerDescription"
+                  [(ngModel)]="triggerDescription"
+                  rows="3"
+                  class="w-full bg-[#11131c]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 shadow-inner-subtle transition-all duration-200 resize-none hover:border-white/20"
+                  placeholder="What caught your attention?"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Input 2: Location / Context -->
+            <div class="space-y-1.5" data-purpose="input-context">
+              <label
+                class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1 flex items-center gap-1.5"
+              >
+                <svg class="w-3.5 h-3.5 text-cyan-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  ></path>
+                  <path
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  ></path>
+                </svg>
+                Environment
+              </label>
+              <div class="relative group">
+                <input
+                  type="text"
+                  name="location"
+                  [(ngModel)]="location"
+                  placeholder="Location / Context"
+                  class="w-full h-12 bg-[#11131c]/60 backdrop-blur-xl border border-white/10 rounded-2xl px-4 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 shadow-inner-subtle transition-all duration-200 hover:border-white/20"
+                />
+              </div>
+            </div>
+
+            <!-- Slider Section: Emotional Pull -->
+            <div
+              class="pt-3 pb-2 px-4 bg-[#11131c]/40 backdrop-blur-xl border border-white/[0.07] rounded-2xl space-y-3"
+              data-purpose="intensity-slider"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold tracking-wide text-slate-300">Emotional Pull</span>
+                <span
+                  class="text-xs font-bold font-mono px-2.5 py-0.5 rounded-full tracking-wider transition-all"
+                  [ngClass]="{
+                    'bg-rose-500/20 border border-rose-500/40 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.4)]':
+                      intensity >= 4,
+                    'bg-rose-500/15 border border-rose-500/30 text-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.25)]':
+                      intensity === 3,
+                    'bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.25)]':
+                      intensity <= 2
+                  }"
+                >
+                  {{ intensity }} / 5
+                </span>
+              </div>
+
+              <!-- Slider Track & Input -->
+              <div class="relative flex items-center py-1">
+                <input
+                  aria-label="Emotional Pull Intensity"
+                  class="w-full z-20"
+                  type="range"
+                  min="1"
+                  max="5"
+                  step="1"
+                  name="intensity"
+                  [(ngModel)]="intensity"
+                />
+              </div>
+
+              <!-- Slider Min/Max Legends -->
+              <div class="flex justify-between items-center text-[11px] font-medium text-slate-500 pb-0.5 px-0.5">
+                <span class="flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span> 1 Mild
+                </span>
+                <span class="flex items-center gap-1">
+                  5 Overwhelming <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Error Banner -->
+            @if (errorMessage) {
+              <div
+                class="p-3.5 rounded-2xl bg-rose-950/40 border border-rose-500/30 flex flex-col gap-2 text-xs text-rose-300 backdrop-blur-md"
+              >
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12" stroke-width="2"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2"></line>
+                  </svg>
+                  <span>{{ errorMessage }}</span>
+                </div>
+                @if (serverStatus === 'sleeping') {
+                  <button
+                    type="button"
+                    (click)="wakeUpServer()"
+                    class="self-start px-3 py-1 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 font-semibold text-[11px] transition-all"
+                  >
+                    Trigger Wake Up Now
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- BEGIN: ActionButtonArea -->
+            <div class="pt-5 mt-auto" data-purpose="cta-container">
+              <button
+                type="submit"
+                [disabled]="!triggerDescription.trim() || submitting"
+                class="relative w-full py-4 px-6 rounded-2xl font-bold tracking-wider text-xs uppercase text-white shadow-glow-ruby transition-all duration-200 active:scale-[0.98] overflow-hidden group border border-rose-400/30 bg-gradient-to-r from-rose-900 via-rose-700 to-red-800 hover:from-rose-800 hover:via-rose-600 hover:to-red-700 disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <!-- Glassmorphic glossy highlight line -->
+                <span
+                  class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none"
+                ></span>
+                <!-- Inner shimmer pulse effect -->
+                <span
+                  class="absolute -inset-x-full top-0 h-full w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:translate-x-[300%] transition-transform duration-1000 ease-in-out"
+                ></span>
+                <div class="relative z-10 flex items-center justify-center gap-2">
+                  @if (submitting) {
+                    <ion-spinner name="crescent" class="w-4 h-4 text-white"></ion-spinner>
+                    <span>Anchoring...</span>
+                  } @else {
+                    <svg class="w-4 h-4 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                      ></path>
+                    </svg>
+                    <span>Record &amp; Anchor</span>
+                  }
+                </div>
+              </button>
+            </div>
+            <!-- END: ActionButtonArea -->
+          </form>
+        }
+
+        <!-- View 2: Stoic Ledger (Analytics / Retrospective) -->
+        @if (!isInterventionActive && currentSegment === 'ledger') {
+          <div class="space-y-5 flex-1 flex flex-col" data-purpose="ledger-view">
+            <!-- Metrics Banner -->
+            <div
+              class="relative p-6 rounded-3xl bg-[#11131c]/60 backdrop-blur-xl border border-white/10 shadow-inner-subtle text-center overflow-hidden"
+            >
+              <div class="absolute -top-10 -right-10 w-32 h-32 bg-rose-600/15 rounded-full blur-2xl"></div>
+              <div class="relative z-10">
+                <span
+                  class="block text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-rose-300 to-red-400 leading-tight mb-1"
+                >
+                  {{ totalDefended }}
+                </span>
+                <span class="text-xs uppercase tracking-widest text-slate-300 font-bold">
+                  Total Impulses Defended
+                </span>
+                <p class="text-xs text-slate-400 mt-2 font-normal leading-relaxed">
+                  Every recorded impulse is a proof of principle held firm.
+                </p>
+              </div>
+            </div>
+
+            <!-- List Content -->
+            @if (loadingLedger) {
+              <div class="flex-1 flex flex-col items-center justify-center py-12 text-slate-400 gap-3">
+                <ion-spinner name="crescent" class="text-cyan-400"></ion-spinner>
+                <span class="text-xs">Loading ledger archive...</span>
+              </div>
+            } @else if (history.length === 0) {
+              <div
+                class="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl bg-white/[0.02] border border-white/5"
+              >
+                <div class="w-12 h-12 rounded-full bg-slate-800/60 flex items-center justify-center text-slate-500 mb-3">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.8"
+                    ></path>
+                  </svg>
+                </div>
+                <p class="text-sm font-medium text-slate-300">The fortress remains quiet.</p>
+                <p class="text-xs text-slate-500 mt-1">No impulses recorded yet.</p>
+              </div>
+            } @else {
+              <div class="space-y-3 flex-1 overflow-y-auto pr-0.5">
+                @for (item of history; track item.id) {
+                  <div
+                    class="p-4 rounded-2xl bg-[#11131c]/60 backdrop-blur-xl border border-white/10 shadow-inner-subtle hover:border-white/20 transition-all duration-200"
+                  >
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-cyan-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                          ></path>
+                        </svg>
+                        {{ item.location || 'Unknown environment' }}
+                      </span>
+                      <span
+                        class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full"
+                        [ngClass]="{
+                          'bg-rose-500/20 text-rose-400 border border-rose-500/30': item.intensity >= 4,
+                          'bg-rose-500/10 text-rose-300 border border-rose-500/20': item.intensity === 3,
+                          'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20': item.intensity <= 2
+                        }"
+                      >
+                        Pull {{ item.intensity }}/5
+                      </span>
+                    </div>
+
+                    <p class="text-sm text-slate-100 font-normal leading-relaxed italic mb-3">
+                      "{{ item.triggerDescription }}"
+                    </p>
+
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 border-t border-white/5 pt-2">
+                      <span>{{ item.createdAt | date: 'mediumDate' }} • {{ item.createdAt | date: 'shortTime' }}</span>
+                      @if (item.reflectedDurationSeconds > 0) {
+                        <span class="text-emerald-400 font-medium flex items-center gap-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                          Paused {{ item.reflectedDurationSeconds }}s
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- View 3: Fullscreen Forced Intervention Layer -->
+        @if (isInterventionActive) {
+          <div
+            class="fixed inset-0 z-50 bg-[#06070b]/95 backdrop-blur-2xl flex items-center justify-center p-6 text-center select-none"
           >
-            {{ cooldownTimer > 0 ? 'Pause & Reflect (' + cooldownTimer + 's)' : 'I Uphold My Promise' }}
-          </ion-button>
-        </div>
+            <!-- Ambient glows within intervention layer -->
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+              <div class="absolute -top-12 -left-12 w-64 h-64 bg-cyan-600/25 rounded-full blur-[90px]"></div>
+              <div
+                class="absolute bottom-10 left-1/2 -translate-x-1/2 w-80 h-72 bg-rose-900/35 rounded-full blur-[100px]"
+              ></div>
+            </div>
+
+            <div class="relative z-10 max-w-sm w-full flex flex-col items-center">
+              <!-- Circular Visual Countdown Timer -->
+              <div class="relative w-28 h-28 mb-6 mx-auto">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#1e2433"
+                    stroke-width="5"
+                  ></circle>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#38bdf8"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-dasharray="282.74"
+                    [style.strokeDashoffset]="strokeDashoffset"
+                    class="transition-all duration-700 ease-linear"
+                  ></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  @if (cooldownTimer > 0) {
+                    <span class="text-3xl font-extrabold text-white font-mono leading-none">
+                      {{ cooldownTimer }}
+                    </span>
+                    <span class="text-[9px] font-bold tracking-widest text-slate-400 uppercase mt-1">SEC</span>
+                  } @else {
+                    <span class="text-3xl text-emerald-400 font-bold leading-none animate-bounce">✓</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Label -->
+              <div
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-[10px] font-bold text-rose-400 tracking-widest uppercase mb-4 shadow-[0_0_12px_rgba(244,63,94,0.2)]"
+              >
+                Remember the Vow
+              </div>
+
+              <!-- Quote -->
+              <blockquote
+                class="text-xl sm:text-2xl font-light italic text-white/95 leading-relaxed tracking-tight mb-4 px-2"
+              >
+                "{{ activeVowText }}"
+              </blockquote>
+
+              <!-- Reflection Subtext -->
+              <p class="text-xs text-slate-400 font-normal leading-relaxed mb-8 max-w-xs">
+                This attraction is biological and temporary. Your promise is intentional and permanent.
+              </p>
+
+              <!-- Action Button -->
+              <div class="w-full">
+                <button
+                  type="button"
+                  [disabled]="cooldownTimer > 0"
+                  (click)="acknowledgeAndUphold()"
+                  class="relative w-full py-4 px-6 rounded-2xl font-bold tracking-wider text-xs uppercase text-white shadow-glow-ruby transition-all duration-200 active:scale-[0.98] overflow-hidden group border border-rose-400/30 bg-gradient-to-r from-rose-900 via-rose-700 to-red-800 hover:from-rose-800 hover:via-rose-600 hover:to-red-700 disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  <span
+                    class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none"
+                  ></span>
+                  <div class="relative z-10 flex items-center justify-center gap-2">
+                    @if (cooldownTimer > 0) {
+                      <span>Pause &amp; Reflect ({{ cooldownTimer }}s)</span>
+                    } @else {
+                      <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+                      </svg>
+                      <span>I Uphold My Promise</span>
+                    }
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </main>
+      <!-- END: MainContent -->
+
+      <!-- BEGIN: BottomHomeIndicator -->
+      <!-- iOS Standard Home Bar -->
+      <div class="w-full pb-3 flex justify-center items-center pointer-events-none z-20">
+        <div class="w-32 h-1 bg-white/20 rounded-full"></div>
       </div>
+      <!-- END: BottomHomeIndicator -->
     </div>
-  }
+  </div>
 </ion-content>
